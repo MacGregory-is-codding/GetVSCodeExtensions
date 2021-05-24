@@ -7,17 +7,24 @@ import (
 	"os/user"
 	"log"
 	"strings"
+	"bufio"
 )
 
 func main() {
-	SaveExtensions("lol.txt");
+
+	const executor string = "code";
+	const command string = "--list-extensions" ;
 	
-	CheckIfCodeInPath();
+	_ = exec.Command(executor, command);
+
+	
+
+	/*CheckIfCodeInPath();
 	
 	var code int = 0;
 	
 	for {
-		fmt.Println("Install from desktop - 1\nSave to desktop - 2");
+		fmt.Println("Install from desktop/extensions.txt - 1\nSave to desktop/extensions.txt - 2");
 		_, err := fmt.Scanf("%d", &code);
 		var wrongInput bool = err != nil || (code != 1 && code != 2);
 
@@ -32,15 +39,17 @@ func main() {
 	const fileName string = "extensions.txt";
 	
 	if code == 1 {
-		SaveExtensions(fileName);
-	}
-
-	if code == 2 {
 		InstallExtensions(fileName);
 	}
 
-	fmt.Println("Thank you, bye!");
-	fmt.Scanln();
+	if code == 2 {
+		SaveExtensions(fileName);
+	}
+
+	fmt.Println("Completed, bye!");
+*/
+
+	//InstallExtensions("extensions.txt");
 }
 
 func GetExtensions() string {
@@ -50,6 +59,7 @@ func GetExtensions() string {
 	cmd := exec.Command(executor, command);
 	
 	out, err := cmd.CombinedOutput();
+
 	if err != nil {
 		log.Fatalf("Failed with %s\n", err);
 	}
@@ -75,7 +85,29 @@ func SaveExtensions(fileName string) {
 }
 
 func InstallExtensions(fileName string) {
+	path := GetDesktopPath() + fileName;
+	const executor string = "code";
 
+	fin, open_err := os.Open(path);
+
+	if open_err != nil {
+		panic("Unable to open file");
+	}
+
+	defer fin.Close();
+
+	scanner := bufio.NewScanner(fin);
+	for scanner.Scan() {
+		command := "--install-extension " + scanner.Text();
+		fmt.Println(command);
+		_ = exec.Command(executor, command);
+	}
+
+	err := scanner.Err();
+
+	if err != nil {
+		panic("Something went wrong...");
+	}
 }
 
 func CheckIfCodeInPath() {
@@ -91,7 +123,7 @@ func GetDesktopPath() string {
 	curUser, error := user.Current();
 	
 	if error != nil {
-	  panic(error);
+		panic(error);
 	}
 
 	return curUser.HomeDir + "/Desktop/";
